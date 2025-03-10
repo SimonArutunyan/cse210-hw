@@ -1,0 +1,48 @@
+using System;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        DisplayWelcomeMessage();
+
+        string userColor = PromptUserColor();
+        int userNumber = PromptUserNumber();
+
+        int result = CalculateColorLength(userColor, userNumber);
+
+        DisplayResult(userColor, userNumber, result);
+    }
+
+    static void DisplayWelcomeMessage()
+    {
+        Console.WriteLine("Welcome to the Color and Number Program!");
+    }
+
+    static string PromptUserColor()
+    {
+        Console.Write("Please enter your favorite color: ");
+        string color = Console.ReadLine();
+
+        return color;
+    }
+
+    static int PromptUserNumber()
+    {
+        Console.Write("Please enter a number: ");
+        int number = int.Parse(Console.ReadLine());
+
+        return number;
+    }
+
+    static int CalculateColorLength(string color, int number)
+    {
+        int colorLength = color.Length;
+        return colorLength * number;
+    }
+
+    static void DisplayResult(string color, int number, int result)
+    {
+        Console.WriteLine($"The length of your favorite color '{color}' multiplied by {number} is {result}.");
+    }
+}
