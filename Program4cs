@@ -1,0 +1,53 @@
+using System;
+using System.Collections.Generic;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        List<int> numbers = new List<int>();
+        
+        int userNumber = 0;
+        Console.WriteLine("Enter numbers to calculate their product, minimum, and count. Enter a negative number to quit.");
+
+        while (userNumber >= 0)
+        {
+            Console.Write("Enter a number (negative to quit): ");
+            string userResponse = Console.ReadLine();
+            userNumber = int.Parse(userResponse);
+            
+            if (userNumber >= 0)
+            {
+                numbers.Add(userNumber);
+            }
+        }
+
+        long product = 1;
+        foreach (int number in numbers)
+        {
+            product *= number;
+        }
+
+        Console.WriteLine($"The product is: {product}");
+
+        if (numbers.Count > 0)
+        {
+            int min = numbers[0];
+            foreach (int number in numbers)
+            {
+                if (number < min)
+                {
+                    min = number;
+                }
+            }
+            Console.WriteLine($"The minimum is: {min}");
+        }
+        else
+        {
+            Console.WriteLine("No numbers were entered.");
+        }
+
+        int count = numbers.Count;
+        Console.WriteLine($"The count of numbers entered is: {count}");
+    }
+}
