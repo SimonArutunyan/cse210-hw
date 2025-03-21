@@ -1,0 +1,102 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+public class Program
+{
+    public static void Main(string[] args)
+    {
+        var scripture = new Scripture(new Reference("John 3:16"), "For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life.");
+        
+        while (true)
+        {
+            Console.Clear();
+            Console.WriteLine(scripture.Display());
+            Console.WriteLine("Press Enter to hide words or type 'quit' to exit.");
+
+            var input = Console.ReadLine();
+            if (input?.ToLower() == "quit")
+            {
+                break;
+            }
+            else
+            {
+                scripture.HideRandomWord();
+            }
+
+            if (scripture.AllWordsHidden())
+            {
+                Console.Clear();
+                Console.WriteLine(scripture.Display());
+                Console.WriteLine("All words are hidden. Exiting...");
+                break;
+            }
+        }
+    }
+}
+
+public class Scripture
+{
+    private Reference _reference;
+    private List<Word> _words;
+
+    public Scripture(Reference reference, string text)
+    {
+        _reference = reference;
+        _words = text.Split(' ').Select(w => new Word(w)).ToList();
+    }
+
+    public string Display()
+    {
+        return $"{_reference.Display()}: " + string.Join(" ", _words.Select(w => w.Display()));
+    }
+
+    public void HideRandomWord()
+    {
+        var random = new Random();
+        var index = random.Next(_words.Count);
+        _words[index].Hide();
+    }
+
+    public bool AllWordsHidden()
+    {
+        return _words.All(w => w.IsHidden);
+    }
+}
+
+public class Reference
+{
+    private string _reference;
+
+    public Reference(string reference)
+    {
+        _reference = reference;
+    }
+
+    public string Display()
+    {
+        return _reference;
+    }
+}
+
+public class Word
+{
+    private string _text;
+    public bool IsHidden { get; private set; }
+
+    public Word(string text)
+    {
+        _text = text;
+        IsHidden = false;
+    }
+
+    public void Hide()
+    {
+        IsHidden = true;
+    }
+
+    public string Display()
+    {
+        return IsHidden ? new string('_', _text.Length) : _text;
+    }
+}
