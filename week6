@@ -1,0 +1,205 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using Newtonsoft.Json;
+
+abstract class BaseGoal
+{
+    public string Name { get; private set; }
+    public bool IsCompleted { get; private set; }
+
+    protected BaseGoal(string name)
+    {
+        Name = name;
+        IsCompleted = false;
+    }
+
+    public void MarkCompleted()
+    {
+        IsCompleted = true;
+    }
+
+    public abstract int GetPoints();
+
+    public override string ToString()
+    {
+        return $"{(IsCompleted ? "[X]" : "[ ]")} {Name}";
+    }
+}
+
+class SimpleGoal : BaseGoal
+{
+    private int points;
+
+    public SimpleGoal(string name, int points) : base(name)
+    {
+        this.points = points;
+    }
+
+    public override int GetPoints()
+    {
+        return IsCompleted ? points : 0;
+    }
+}
+
+class EternalGoal : BaseGoal
+{
+    private int pointsPerRecord;
+    private int records;
+
+    public EternalGoal(string name, int pointsPerRecord) : base(name)
+    {
+        this.pointsPerRecord = pointsPerRecord;
+        records = 0;
+    }
+
+    public void RecordEvent()
+    {
+        records++;
+    }
+
+    public override int GetPoints()
+    {
+        return records * pointsPerRecord;
+    }
+
+    public override string ToString()
+    {
+        return $"{base.ToString()} - Recorded {records} times";
+    }
+}
+
+class ListGoal : BaseGoal
+{
+    private int targetCount;
+    private int currentCount;
+    private int pointsPerRecord;
+    private int bonusPoints;
+
+    public ListGoal(string name, int targetCount, int pointsPerRecord, int bonusPoints) : base(name)
+    {
+        this.targetCount = targetCount;
+        this.pointsPerRecord = pointsPerRecord;
+        this.bonusPoints = bonusPoints;
+        currentCount = 0;
+    }
+
+    public void RecordEvent()
+    {
+        currentCount++;
+        if (currentCount >= targetCount)
+            MarkCompleted();
+    }
+
+    public override int GetPoints()
+    {
+        int points = currentCount * pointsPerRecord;
+        if (IsCompleted)
+            points += bonusPoints;
+        return points;
+    }
+
+    public override string ToString()
+    {
+        return $"{base.ToString()} - Completed {currentCount}/{targetCount} times";
+    }
+}
+
+class GoalManager
+{
+    private List<BaseGoal> goals;
+    public int TotalPoints { get; private set; }
+
+    public GoalManager()
+    {
+        goals = new List<BaseGoal>();
+        TotalPoints = 0;
+    }
+
+    public void AddGoal(BaseGoal goal)
+    {
+        goals.Add(goal);
+    }
+
+    public void RecordGoal(string goalName)
+    {
+        foreach (var goal in goals)
+        {
+            if (goal.Name == goalName)
+            {
+                if (goal is EternalGoal eternalGoal)
+                {
+                    eternalGoal.RecordEvent();
+                }
+                else if (goal is ListGoal listGoal)
+                {
+                    listGoal.RecordEvent();
+                }
+                else
+                {
+                    goal.MarkCompleted();
+                }
+                TotalPoints += goal.GetPoints();
+                break;
+            }
+        }
+    }
+
+    public void DisplayGoals()
+    {
+        foreach (var goal in goals)
+        {
+            Console.WriteLine(goal);
+        }
+    }
+
+    public void SaveProgress(string filename)
+    {
+        File.WriteAllText(filename, JsonConvert.SerializeObject(new
+        {
+            Goals = goals,
+            TotalPoints
+        }));
+    }
+
+    public void LoadProgress(string filename)
+    {
+        var data = JsonConvert.DeserializeObject<dynamic>(File.ReadAllText(filename));
+        TotalPoints = data.TotalPoints;
+        goals = new List<BaseGoal>();
+        
+        foreach (var goalData in data.Goals)
+        {
+            BaseGoal goal = goalData.points != null
+                ? new SimpleGoal(goalData.Name.ToString(), (int)goalData.points)
+                : goalData.targetCount != null
+                    ? new ListGoal(goalData.Name.ToString(), (int)goalData.targetCount, (int)goalData.pointsPerRecord, (int)goalData.bonusPoints)
+                    : new EternalGoal(goalData.Name.ToString(), (int)goalData.pointsPerRecord);
+            goal.IsCompleted = goalData.IsCompleted;
+            goals.Add(goal);
+        }
+    }
+}
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        GoalManager manager = new GoalManager();
+
+        manager.AddGoal(new SimpleGoal("Run a marathon", 1000));
+        manager.AddGoal(new EternalGoal("Read Sacred Texts", 100));
+        manager.AddGoal(new ListGoal("Visit the temple", 10, 50, 500));
+
+        manager.RecordGoal("Read Sacred Texts");
+        manager.RecordGoal("Read Sacred Texts");
+        manager.RecordGoal("Run a marathon");
+
+        manager.DisplayGoals();
+        Console.WriteLine($"Total points: {manager.TotalPoints}");
+
+        // Save and load progress
+        manager.SaveProgress("goal_progress.json");
+        manager.LoadProgress("goal_progress.json");
+    }
+}
